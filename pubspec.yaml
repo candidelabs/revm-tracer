@@ -1,6 +1,6 @@
 name: revm_tracer
 description: "FFI Library to trace EVM transactions with REVM."
-version: 0.0.1
+version: 0.0.2
 homepage: https://candide.dev/opensig
 
 environment:
