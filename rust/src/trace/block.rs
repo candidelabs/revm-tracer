@@ -19,6 +19,18 @@ pub struct BlockDetails {
     pub difficulty: U256,
     #[serde(rename(deserialize = "excessBlobGas"))]
     pub excess_blob_gas: U256,
+    /// After the merge, the block's randomness (PREVRANDAO) is in mixHash and difficulty is 0.
+    #[serde(rename(deserialize = "mixHash"), default)]
+    pub mix_hash: Option<B256>,
+}
+
+/// PREVRANDAO for the block: mixHash on post-merge chains (difficulty 0), otherwise the difficulty,
+/// which is what chains like Arbitrum, BSC and Polygon return for PREVRANDAO.
+pub fn prevrandao(block_details: &BlockDetails) -> B256 {
+    match block_details.mix_hash {
+        Some(mix_hash) if block_details.difficulty.is_zero() => mix_hash,
+        _ => B256::from(block_details.difficulty),
+    }
 }
 
 pub fn create_block_env_from_block_details(
@@ -31,7 +43,7 @@ pub fn create_block_env_from_block_details(
         gas_limit: block_details.gas_limit.try_into()?,
         basefee: block_details.base_fee_per_gas.try_into()?,
         difficulty: block_details.difficulty,
-        prevrandao: Some(B256::from(block_details.difficulty)),
+        prevrandao: Some(prevrandao(&block_details)),
         blob_excess_gas_and_price: Some(
             BlobExcessGasAndPrice::new(
                 1
